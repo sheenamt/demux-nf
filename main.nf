@@ -8,6 +8,7 @@ config_file = jsonSlurper.parseText(file(params.config).text)
 
 process demux {
     echo true
+    cpus 30
     container "nkrumm/nextflow-demux:latest"
     input:
         val run_id from Channel.from(params.run_id)
@@ -131,6 +132,7 @@ process trim {
 }
 
 process fastqc {
+    cpus 2
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
     input:
         set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
@@ -159,6 +161,7 @@ process multiqc {
     echo true
     container 'quay.io/biocontainers/multiqc:1.7--py_4'
     memory '4 GB'
+    cpus 4
     input:
         path('fastqc.*') from fastqc_report_ch.flatMap().collect()
         //file('*') from trim_reads_report_ch.collect()
