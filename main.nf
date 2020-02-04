@@ -1,16 +1,9 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 
-def jsonSlurper = new JsonSlurper()
-
-params.fcid = "H7NFYBCX3"
-params.run_id = "200124_NCGL3_0603_H7NFYBCX3"
-params.config = "config.json"
-params.samplesheet = "SampleSheet.converted.csv"
-params.output_path = "/docker_scratch/publish"
-params.adapters = "/sequencing_adapters.fa"
 
 // read config
+def jsonSlurper = new JsonSlurper()
 config_file = jsonSlurper.parseText(file(params.config).text)
 
 process demux {
