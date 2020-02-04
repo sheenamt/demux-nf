@@ -25,7 +25,7 @@ process demux {
     script:
         rundir = "inputs/$run_id"
         """
-        aws s3 sync --only-show-errors s3://ncgl-prod.run-bucket/${run_id} ${rundir}
+        aws s3 sync --only-show-errors s3://uwlm-personal/nkrumm/${run_id} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
          tar xf ${rundir}/Data.tar -C ${rundir}/
