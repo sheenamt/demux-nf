@@ -1,0 +1,38 @@
+{
+  "properties": {
+    "fcid": {
+      "title": "Illumina Flowcell ID",
+      "default": "H7NFYBCX3",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run ID (run folder name)",
+      "default": "200124_NCGL3_0603_H7NFYBCX3",
+      "type": "string"
+    },
+    "samplesheet": {
+      "title": "Illumina sample sheet",
+      "default": "s3://uwlm-personal/nkrumm/demux-test/SampleSheet.converted.csv",
+      "type": "string"
+    },
+    "output_path": {
+      "title": "S3 path for output",
+      "default": "s3://uwlm-personal/nkrumm/demux-test/publish/H7NFYBCX3",
+      "type": "string"
+    },
+    "adapters": {
+      "title": "Path to adapter file",
+      "default": "s3://uwlm-personal/nkrumm/demux-test/sequencing_adapters.fa",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fcid",
+    "run_id",
+    "samplesheet",
+    "output_path",
+    "adapters"    
+  ],
+  "type": "object"
+}
+
