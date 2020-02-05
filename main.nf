@@ -26,6 +26,7 @@ process demux {
     script:
         rundir = "inputs/$run_id"
         """
+        mkdir -p ${rundir}
         aws s3 sync --only-show-errors s3://uwlm-personal/nkrumm/${run_id} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
