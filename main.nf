@@ -106,7 +106,7 @@ umi_out_ch.mix(postprocess_ch.umi_false)
 
 
 process trim {
-    cpus 8
+    cpus 4
     memory '8 GB'
     container 'nkrumm/atropos-paper:latest'
     input:
