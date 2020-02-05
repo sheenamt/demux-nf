@@ -9,6 +9,7 @@ config_file = jsonSlurper.parseText(file(params.config).text)
 process demux {
     echo true
     cpus 30
+    memory '68 GB'
     container "nkrumm/nextflow-demux:latest"
     input:
         val run_id from Channel.from(params.run_id)
