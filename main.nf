@@ -107,6 +107,7 @@ umi_out_ch.mix(postprocess_ch.umi_false)
 
 process trim {
     cpus 8
+    memory '8 GB'
     container 'nkrumm/atropos-paper:latest'
     input:
         set key, file(fastqs), config from trim_in_ch.trim_true
@@ -135,6 +136,7 @@ process trim {
 
 process fastqc {
     cpus 2
+    memory '4 GB'
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
     input:
         set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
