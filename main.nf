@@ -107,7 +107,7 @@ umi_out_ch.mix(postprocess_ch.umi_false)
 
 process trim {
     cpus 4
-    memory '8 GB'
+    memory '7 GB'
     container 'nkrumm/atropos-paper:latest'
     input:
         set key, file(fastqs), config from trim_in_ch.trim_true
