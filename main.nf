@@ -72,7 +72,8 @@ demux_fastq_out_ch.flatMap()
           def config = config_file.lanes[key[0]][key[1]][key[2]]
           [key, files, config] 
          } 
-    .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print
+    .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print'
+    .filter { it[2].library_type != "CHARM" } // TODO REMOVE DEBUG
     .branch { 
         // send files to postprocess_ch.umi_true if is_umi is set.
         umi_true: it[2].is_umi
