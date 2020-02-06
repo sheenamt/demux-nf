@@ -45,7 +45,6 @@ process demux {
             --create-fastq-for-index-reads \
             --use-bases-mask ${config_file.basemask} \
             --mask-short-adapter-reads 0 \
-            #--tiles s_1_1101
         """
 }
 
@@ -58,14 +57,12 @@ demux_fastq_out_ch.flatMap()
     .map { path -> 
           def filename = path.getName() // gets filename
           def tokens = path.toString().tokenize('/') // tokenize path
-          println (tokens)
           def lane_re = filename =~ /(?!L00)(\d)(?=_R\d_001.fastq.gz)/ // matches L00? in the filename for the lane.
           def lane = lane_re[0][0] // weird groovy way to get first match
           def project = tokens.get(tokens.size() - 2) // Project_Name
           //def sample_id = tokens.get(tokens.size() - 2) // Sample_ID
           def sample_id_re = filename =~ /(.*)(?=_S[\d]*_L00\d_.*.fastq.gz)/
           def sample_id = sample_id_re[0][0]
-          println tuple(lane, project, sample_id)
           def key = tuple(lane, project, sample_id)
           return tuple(key, path)
          }
@@ -96,8 +93,10 @@ process postprocess_umi {
         """
 }
 
-// route samples to trim process if needed
+
+// merge umi_out_ch with postprocess_ch.umi_false
 umi_out_ch.mix(postprocess_ch.umi_false)
+    // route samples to trim process if needed
     .branch {
         trim_true: it[2].fwd_adapter || it[2].rev_adapter
         trim_false: true // default, if no fwd or rev adapters are specified
