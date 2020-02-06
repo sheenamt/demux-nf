@@ -144,6 +144,8 @@ process fastqc {
         path("libraries/**.fastq.gz")
 
     publishDir params.output_path, pattern: "*.html", mode: "copy"
+    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy"
+
     script:
         lane = key[0]
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
