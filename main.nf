@@ -138,7 +138,7 @@ process trim {
 // note that we *never* combine lanes in the library (fastq.gz) output.
 
 trim_out_ch.mix(trim_in_ch.trim_false)
-    .into { qc_in_ch, finalize_libraries_in_ch }
+    .into { qc_in_ch; finalize_libraries_in_ch }
 
 if (params.qc_merge_lanes){
     // merge together lanes in QC step
