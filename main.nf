@@ -11,9 +11,9 @@ process demux {
     cpus 30
     memory '68 GB'
     container "nkrumm/nextflow-demux:latest"
-    publishDir params.output_path, pattern: 'output/Reports', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
-    publishDir params.output_path, pattern: 'output/Stats', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
-    publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy' // these are the "Undetermined" fastq.gz files
+    publishDir params.output_path, pattern: 'output/Reports', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}, overwrite: true
+    publishDir params.output_path, pattern: 'output/Stats', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}, overwrite: true
+    publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy', overwrite: true // these are the "Undetermined" fastq.gz files
 
     input:
         val run_id from Channel.from(params.run_id)
@@ -138,8 +138,8 @@ process fastqc {
     memory '4 GB'
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
 
-    //publishDir params.output_path, pattern: "*.html", mode: "copy"
-    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy"
+    publishDir params.output_path, pattern: "*.html", mode: "copy", overwrite: true
+    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy", overwrite: true
 
     input:
         set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
@@ -174,7 +174,7 @@ process multiqc {
         //file('*') from trim_reads_report_ch.collect()
     output:
        file "multiqc_report.${params.fcid}.html"
-    publishDir params.output_path, saveAs: {f -> "multiqc/${f}"}, mode: "copy"
+    publishDir params.output_path, saveAs: {f -> "multiqc/${f}"}, mode: "copy", overwrite: true
     script:
         """
         multiqc -v -d --filename "multiqc_report.${params.fcid}.html" .
