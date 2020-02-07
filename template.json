@@ -30,7 +30,7 @@
       "title": "Merge lanes during QC analysis?",
       "type": "string",
       "enum": ["yes", "no"]
-    },
+    }
   },
   "required": [
     "fcid",
