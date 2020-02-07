@@ -139,7 +139,7 @@ process fastqc {
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
 
     publishDir params.output_path, pattern: "*.html", mode: "copy", overwrite: true
-    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy", overwrite: true
+    publishDir params.output_path, pattern: "**.fastq.gz", mode: "copy", overwrite: true
 
     input:
         set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
