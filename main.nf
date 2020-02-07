@@ -138,7 +138,7 @@ process fastqc {
     memory '4 GB'
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
 
-    publishDir params.output_path, pattern: "*.html", mode: "copy"
+    //publishDir params.output_path, pattern: "*.html", mode: "copy"
     publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy"
 
     input:
@@ -151,7 +151,7 @@ process fastqc {
     script:
         lane = key[0]
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
-        library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}/"
+        library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}"
         fastqc_path = "fastqc/${config.Sample_Name}/${config.library_type}/${readgroup}/"
         """
         mkdir -p ${fastqc_path}
