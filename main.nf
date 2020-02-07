@@ -133,36 +133,71 @@ process trim {
         """
 }
 
+// merge together trimmed and non-trimmed readgroups
+// if params.qc_merge_lanes is set, we will output merged lanes from FASTQC
+// note that we *never* combine lanes in the library (fastq.gz) output.
+
+trim_out_ch.mix(trim_in_ch.trim_false)
+    .into { qc_in_ch, finalize_libraries_in_ch }
+
+if (params.qc_merge_lanes){
+    // merge together lanes in QC step
+    // group by sample project + sample ID (omits lane from the key)
+    qc_in_ch.view()
+            .map{ (key, files, config) -> [["all_lanes", key[1], key[2]], files, config]}
+            .view()
+            .groupTuple()
+            .view()
+            .set { fastqc_in_ch }
+} else {
+    // consider lanes separately when running FASTQC
+    qc_in_ch.set{ fastqc_in_ch }
+}
 process fastqc {
     cpus 2
     memory '4 GB'
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
 
     publishDir params.output_path, pattern: "*.html", mode: "copy", overwrite: true
-    publishDir params.output_path, pattern: "**.fastq.gz", mode: "copy", overwrite: true
-
+    
     input:
-        set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
+        set key, file(fastqs), config from fastqc_in_ch
     output:
         path "fastqc/*", type:"dir" into fastqc_report_ch
-        path("libraries/**.fastq.gz")
-
-    
+   
     script:
-        lane = key[0]
+        lane = key[0] // could be a number or "all_lanes" if qc_merge_lanes is true (see above) 
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
-        library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}"
         fastqc_path = "fastqc/${config.Sample_Name}/${config.library_type}/${readgroup}/"
+        sample_name = "${config.Sample_Name}:${config.library_type}:${readgroup}"
         """
         mkdir -p ${fastqc_path}
-        fastqc --quiet -o ${fastqc_path} ${fastqs[0]} ${fastqs[1]}
+        zcat ${fastqs[0]} ${fastqs[1]} | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}
+        """
+}
 
-        # save files using appropriate paths
+process finalize_libraries {
+    // consider moving the code to put final libraries here
+    // would handle external s3 destinations (+ multiple destinations)
+    // would not confound fastqc step above
+    // would be an extra copy/move of the data (as an extra process)
+    // would handle final s3 tagging to specify lifecyle policies
+    publishDir params.output_path, pattern: "**.fastq.gz", mode: "copy", overwrite: true
+    input:
+        set key, file(fastqs), config from finalize_libraries_in_ch
+    output:
+        path("libraries/**.fastq.gz")
+    script: 
+        lane = key[0] // note this is always the lane number, we don't store merged lanes.
+        readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
+        library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}"
+        """
         mkdir -p ${library_path}
         mv ${fastqs[0]} ${library_path}/1.fastq.gz
         mv ${fastqs[1]} ${library_path}/2.fastq.gz
         """
 }
+
 
 process multiqc {
     echo true
