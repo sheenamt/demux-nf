@@ -148,7 +148,7 @@ if (qc_merge_lanes){
     qc_in_ch.map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
             .groupTuple()
             .map{ key, files, config -> [key, files.flatten(), config[0]] }
-            .set{ in_ch }
+            .set{ fastqc_in_ch }
 } else {
     // consider lanes separately when running FASTQC
     qc_in_ch.set{ fastqc_in_ch }
