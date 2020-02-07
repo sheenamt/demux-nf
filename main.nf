@@ -11,6 +11,10 @@ process demux {
     cpus 30
     memory '68 GB'
     container "nkrumm/nextflow-demux:latest"
+    publishDir params.output_path, pattern: 'output/Reports', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
+    publishDir params.output_path, pattern: 'output/Stats', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
+    publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy' // these are the "Undetermined" fastq.gz files
+
     input:
         val run_id from Channel.from(params.run_id)
         file(samplesheet) from Channel.fromPath(params.samplesheet)
@@ -18,11 +22,6 @@ process demux {
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
         file("output/Stats")
-
-        publishDir params.output_path, pattern: 'output/Reports', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
-        publishDir params.output_path, pattern: 'output/Stats', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}
-        publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy' // these are the "Undetermined" fastq.gz files
-
 
     script:
         rundir = "inputs/$run_id"
@@ -138,15 +137,17 @@ process fastqc {
     cpus 2
     memory '4 GB'
     container 'quay.io/biocontainers/fastqc:0.11.8--1'
+
+    publishDir params.output_path, pattern: "*.html", mode: "copy"
+    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy"
+
     input:
         set key, file(fastqs), config from trim_out_ch.mix(trim_in_ch.trim_false)
     output:
         path "fastqc/*", type:"dir" into fastqc_report_ch
         path("libraries/**.fastq.gz")
 
-    publishDir params.output_path, pattern: "*.html", mode: "copy"
-    publishDir params.output_path, pattern: "*.fastq.gz", mode: "copy"
-
+    
     script:
         lane = key[0]
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
