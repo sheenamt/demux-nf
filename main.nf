@@ -6,6 +6,8 @@ import groovy.json.JsonOutput
 def jsonSlurper = new JsonSlurper()
 config_file = jsonSlurper.parseText(file(params.config).text)
 
+qc_merge_lanes = params.qc_merge_lanes == "yes"
+
 process demux {
     echo true
     cpus 30
@@ -140,19 +142,18 @@ process trim {
 trim_out_ch.mix(trim_in_ch.trim_false)
     .into { qc_in_ch; finalize_libraries_in_ch }
 
-if (params.qc_merge_lanes){
+if (qc_merge_lanes){
     // merge together lanes in QC step
     // group by sample project + sample ID (omits lane from the key)
-    qc_in_ch.view()
-            .map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
-            .view()
+    qc_in_ch.map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
             .groupTuple()
-            .view()
-            .set { fastqc_in_ch }
+            .map{ key, files, config -> [key, files.flatten(), config[0]] }
+            .set{ in_ch }
 } else {
     // consider lanes separately when running FASTQC
     qc_in_ch.set{ fastqc_in_ch }
 }
+
 process fastqc {
     cpus 2
     memory '4 GB'
@@ -168,8 +169,8 @@ process fastqc {
     script:
         lane = key[0] // could be a number or "all_lanes" if qc_merge_lanes is true (see above) 
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
-        fastqc_path = "fastqc/${config.Sample_Name}/${config.library_type}/${readgroup}/"
-        sample_name = "${config.Sample_Name}:${config.library_type}:${readgroup}"
+        sample_name = "${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
+        fastqc_path = "fastqc/${sample_name}/"
         """
         mkdir -p ${fastqc_path}
         zcat ${fastqs[0]} ${fastqs[1]} | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}

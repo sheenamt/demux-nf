@@ -24,7 +24,13 @@
       "title": "Path to adapter file",
       "default": "s3://uwlm-personal/nkrumm/demux-test/sequencing_adapters.fa",
       "type": "string"
-    }
+    },
+    "qc_merge_lanes": {
+      "default": "no",
+      "title": "Merge lanes during QC analysis?",
+      "type": "string",
+      "enum": ["yes", "no"]
+    },
   },
   "required": [
     "fcid",
