@@ -144,7 +144,7 @@ if (params.qc_merge_lanes){
     // merge together lanes in QC step
     // group by sample project + sample ID (omits lane from the key)
     qc_in_ch.view()
-            .map{ (key, files, config) -> [["all_lanes", key[1], key[2]], files, config]}
+            .map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
             .view()
             .groupTuple()
             .view()
