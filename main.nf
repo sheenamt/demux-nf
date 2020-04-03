@@ -25,6 +25,9 @@ process demux {
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
         file("output/Stats")
+        file("output/Stats/Stats.json") into stats_json_multiqc
+        path("inputs/${run_id}/InterOp/*") into interop_input
+        file("inputs/${run_id}/RunInfo.xml") into interop_input_xml
 
     script:
         rundir = "inputs/$run_id"
@@ -47,10 +50,9 @@ process demux {
             --barcode-mismatches 0,0 \
             --create-fastq-for-index-reads \
             ${basemask} \
-            --mask-short-adapter-reads 0 \
+            --mask-short-adapter-reads 0
         """
 }
-
 
 demux_fastq_out_ch.flatMap()
     // process output directories from bcl2fastq and re-associate them with config entries
@@ -217,6 +219,23 @@ process finalize_libraries {
 }
 
 
+process interop {
+    container 'quay.io/biocontainers/illumina-interop:1.1.8--hfc679d8_0'
+    memory '4 GB'
+    cpus 1
+    input:
+        path("InterOp/*") from interop_input
+        file("RunInfo.xml") from interop_input_xml
+    output:
+        path("*.csv") into interop_output
+
+    script:
+        """
+        interop_summary --csv=1 InterOp/ > interop_summary.csv
+        interop_index-summary --csv=1 InterOp/ > interop_index-summary.csv
+        """
+}
+
 process multiqc {
     echo true
     container 'quay.io/biocontainers/multiqc:1.7--py_4'
@@ -224,6 +243,8 @@ process multiqc {
     cpus 4
     input:
         path('fastqc.*') from fastqc_report_ch.flatMap().collect()
+        file("Stats.json") from stats_json_multiqc
+        path("interop/*") from interop_output
         //file('*') from trim_reads_report_ch.collect()
     output:
        file "multiqc_report.${params.fcid}.html"
