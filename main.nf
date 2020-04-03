@@ -224,15 +224,15 @@ process interop {
     memory '4 GB'
     cpus 1
     input:
-        path("InterOp/*") from interop_input
-        file("RunInfo.xml") from interop_input_xml
+        path("${params.run_id}/InterOp/*") from interop_input
+        file("${params.run_id}/RunInfo.xml") from interop_input_xml
     output:
         path("*.csv") into interop_output
 
     script:
         """
-        interop_summary --csv=1 InterOp/ > interop_summary.csv
-        interop_index-summary --csv=1 InterOp/ > interop_index-summary.csv
+        interop_summary --csv=1 ${params.run_id}/ > interop_summary.csv
+        interop_index-summary --csv=1 ${params.run_id}/ > interop_index-summary.csv
         """
 }
 
