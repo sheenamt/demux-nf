@@ -28,6 +28,7 @@ process demux {
 
     script:
         rundir = "inputs/$run_id"
+        basemask = config_file.basemask ? "--use-bases-mask " + config_file.basemask : ""
         """
         mkdir -p ${rundir}
         aws s3 sync --only-show-errors ${run_folder} ${rundir}
@@ -45,7 +46,7 @@ process demux {
             --ignore-missing-positions \
             --barcode-mismatches 0,0 \
             --create-fastq-for-index-reads \
-            --use-bases-mask ${config_file.basemask} \
+            ${basemask} \
             --mask-short-adapter-reads 0 \
         """
 }
