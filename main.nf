@@ -19,6 +19,7 @@ process demux {
 
     input:
         val run_id from Channel.from(params.run_id)
+        val run_folder from Channel.from(params.run_folder)
         file(samplesheet) from Channel.fromPath(params.samplesheet)
     output:
         file("output/**.fastq.gz") into demux_fastq_out_ch
@@ -29,7 +30,7 @@ process demux {
         rundir = "inputs/$run_id"
         """
         mkdir -p ${rundir}
-        aws s3 sync --only-show-errors s3://uwlm-personal/nkrumm/${run_id} ${rundir}
+        aws s3 sync --only-show-errors ${run_folder} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
          tar xf ${rundir}/Data.tar -C ${rundir}/

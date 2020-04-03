@@ -10,6 +10,11 @@
       "default": "200124_NCGL3_0603_H7NFYBCX3",
       "type": "string"
     },
+    "run_folder": {
+      "title": "S3 path to folder containing Illumina run output",
+      "default": "s3://uwlm-personal/nkrumm/200124_NCGL3_0603_H7NFYBCX3",
+      "type": "string"
+    },
     "samplesheet": {
       "title": "Illumina sample sheet",
       "default": "s3://uwlm-personal/nkrumm/demux-test/SampleSheet.converted.csv",
