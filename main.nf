@@ -173,7 +173,7 @@ process fastqc {
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
         sample_name = "${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
         fastqc_path = "fastqc/${sample_name}/"
-        if (fastqs.length == 2)
+        if (fastqs.size() == 2)
             """
             mkdir -p ${fastqc_path}
             zcat ${fastqs[0]} ${fastqs[1]} | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}
@@ -203,7 +203,7 @@ process finalize_libraries {
         lane = key[0] // note this is always the lane number, we don't store merged lanes.
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
         library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}"
-        if (fastqs.length == 2)
+        if (fastqs.size() == 2)
             """
             mkdir -p ${library_path}
             mv ${fastqs[0]} ${library_path}/1.fastq.gz
