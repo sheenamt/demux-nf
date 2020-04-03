@@ -180,6 +180,9 @@ process fastqc {
 }
 
 process finalize_libraries {
+    container "nkrumm/nextflow-demux:latest"
+    cpus 2
+    memory '4 GB'
     // consider moving the code to put final libraries here
     // would handle external s3 destinations (+ multiple destinations)
     // would not confound fastqc step above
