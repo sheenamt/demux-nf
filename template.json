@@ -20,6 +20,11 @@
       "default": "s3://uwlm-personal/nkrumm/demux-test/SampleSheet.converted.csv",
       "type": "string"
     },
+    "config": {
+      "title": "demux-next config.json",
+      "default": "s3://uwlm-personal/nkrumm/demux-test/config.json",
+      "type": "string"
+    },
     "output_path": {
       "title": "S3 path for output",
       "default": "s3://uwlm-personal/nkrumm/demux-test/publish/H7NFYBCX3",
