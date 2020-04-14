@@ -20,26 +20,25 @@
       "default": "s3://uwlm-personal/nkrumm/demux-test/SampleSheet.converted.csv",
       "type": "string"
     },
-    "config": {
-      "title": "demux-next config.json",
-      "default": "s3://uwlm-personal/nkrumm/demux-test/config.json",
-      "type": "string"
-    },
     "output_path": {
       "title": "S3 path for output",
-      "default": "s3://uwlm-personal/nkrumm/demux-test/publish/H7NFYBCX3",
+      "default": "s3://uwlm-personal/nkrumm/demux-test/publish/",
       "type": "string"
     },
-    "adapters": {
-      "title": "Path to adapter file",
-      "default": "s3://uwlm-personal/nkrumm/demux-test/sequencing_adapters.fa",
+    "fwd_adapter": {
+      "title": "Forward adapter sequence (optional)",
+      "default": null,
+      "type": "string"
+    },
+    "rev_adapter": {
+      "title": "Reverse adapter sequence (optional)",
+      "default": null,
       "type": "string"
     },
     "qc_merge_lanes": {
-      "default": "no",
+      "default": false,
       "title": "Merge lanes during QC analysis?",
-      "type": "string",
-      "enum": ["yes", "no"]
+      "type": "boolean"
     }
   },
   "required": [

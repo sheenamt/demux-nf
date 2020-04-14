@@ -13,22 +13,22 @@ process preflight {
     input:
         file(samplesheet) from Channel.fromPath(params.samplesheet)
     output:
-        file(samplesheet), file("config.json") into config_ch
+        file("${params.run_id}.samplesheet.csv"), file("${params.run_id}.config.json") into config_ch
 
     memory "2GB"
     cpus 1
 
     script:
         umi_options = params.is_umi ? "--is-umi " : null
+        trim_options = params.trim_reads ? "--fwd-adapter ${params.fwd_adapter} --rev-adapter ${params.rev_adapter}" : null
         """
         python parse_samplesheet.py \
             --input ${samplesheet} \
             --output ${params.run_id} \
-            --fwd-adapter ${params.fwd_adapter} \
-            --rev-adapter ${params.rev_adapter} \
             --project-name ${params.project_name} \
             --library-type ${params.library_type} \
-            ${umi_options}
+            ${umi_options} \
+            ${trim_options}
         """
 }
 
