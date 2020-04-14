@@ -46,7 +46,7 @@
     "run_id",
     "run_folder",
     "samplesheet",
-    "output_path",
+    "output_path"
   ],
   "type": "object"
 }
