@@ -27,12 +27,12 @@
     },
     "fwd_adapter": {
       "title": "Forward adapter sequence (optional)",
-      "default": null,
+      "default": "",
       "type": "string"
     },
     "rev_adapter": {
       "title": "Reverse adapter sequence (optional)",
-      "default": null,
+      "default": "",
       "type": "string"
     },
     "qc_merge_lanes": {
@@ -44,9 +44,9 @@
   "required": [
     "fcid",
     "run_id",
+    "run_folder",
     "samplesheet",
     "output_path",
-    "adapters"    
   ],
   "type": "object"
 }
