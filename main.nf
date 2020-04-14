@@ -3,10 +3,34 @@ import groovy.json.JsonOutput
 
 
 // read config
-def jsonSlurper = new JsonSlurper()
-config_file = jsonSlurper.parseText(file(params.config).text)
+// def jsonSlurper = new JsonSlurper()
+// config_file = jsonSlurper.parseText(file(params.config).text)
 
 qc_merge_lanes = params.qc_merge_lanes == "yes"
+
+process preflight {
+    container "nkrumm/nextflow-demux:latest"
+    input:
+        file(samplesheet) from Channel.fromPath(params.samplesheet)
+    output:
+        file(samplesheet), file("config.json") into config_ch
+
+    memory "2GB"
+    cpus 1
+
+    script:
+        umi_options = params.is_umi ? "--is-umi " : null
+        """
+        python parse_samplesheet.py \
+            --input ${samplesheet} \
+            --output ${params.run_id} \
+            --fwd-adapter ${params.fwd_adapter} \
+            --rev-adapter ${params.rev_adapter} \
+            --project-name ${params.project_name} \
+            --library-type ${params.library_type} \
+            ${umi_options}
+        """
+}
 
 process demux {
     echo true
@@ -18,23 +42,21 @@ process demux {
     publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy', overwrite: true // these are the "Undetermined" fastq.gz files
 
     input:
-        val run_id from Channel.from(params.run_id)
-        val run_folder from Channel.from(params.run_folder)
-        file(samplesheet) from Channel.fromPath(params.samplesheet)
+        file(samplesheet), file(config) from config_ch
     output:
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
         file("output/Stats")
         file("output/Stats/Stats.json") into stats_json_multiqc
-        path("inputs/${run_id}/InterOp/*") into interop_input
-        file("inputs/${run_id}/RunInfo.xml") into interop_input_xml
+        path("inputs/${params.run_id}/InterOp/*") into interop_input
+        file("inputs/${params.run_id}/RunInfo.xml") into interop_input_xml
 
     script:
-        rundir = "inputs/$run_id"
+        rundir = "inputs/${params.run_id}"
         basemask = config_file.basemask ? "--use-bases-mask " + config_file.basemask : ""
         """
         mkdir -p ${rundir}
-        aws s3 sync --only-show-errors ${run_folder} ${rundir}
+        aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
          tar xf ${rundir}/Data.tar -C ${rundir}/
