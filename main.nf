@@ -6,21 +6,20 @@ import groovy.json.JsonOutput
 // def jsonSlurper = new JsonSlurper()
 // config_file = jsonSlurper.parseText(file(params.config).text)
 
-qc_merge_lanes = params.qc_merge_lanes == "yes"
-
 process preflight {
     container "nkrumm/nextflow-demux:latest"
     input:
         file(samplesheet) from Channel.fromPath(params.samplesheet)
     output:
-        file("${params.run_id}.samplesheet.csv"), file("${params.run_id}.config.json") into config_ch
-
+        set file("${params.run_id}.samplesheet.csv"), file("${params.run_id}.config.json") into config_ch
+        
     memory "2GB"
     cpus 1
 
     script:
         umi_options = params.is_umi ? "--is-umi " : null
-        trim_options = params.trim_reads ? "--fwd-adapter ${params.fwd_adapter} --rev-adapter ${params.rev_adapter}" : null
+        fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : null
+        rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : null
         """
         python parse_samplesheet.py \
             --input ${samplesheet} \
@@ -28,7 +27,7 @@ process preflight {
             --project-name ${params.project_name} \
             --library-type ${params.library_type} \
             ${umi_options} \
-            ${trim_options}
+            ${fwd_adapter} ${rev_adapter}
         """
 }
 
@@ -42,7 +41,7 @@ process demux {
     publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy', overwrite: true // these are the "Undetermined" fastq.gz files
 
     input:
-        file(samplesheet), file(config) from config_ch
+        set file(samplesheet), file(config) from config_ch
     output:
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
@@ -138,7 +137,7 @@ process trim {
     container 'nkrumm/atropos-paper:latest'
     input:
         set key, file(fastqs), config from trim_in_ch.trim_true
-        file(params.adapters)
+        //file(params.adapters)
     output:
         set key, file("trimmed/*.fastq.gz"), config into trim_out_ch
     
@@ -168,7 +167,7 @@ process trim {
 trim_out_ch.mix(trim_in_ch.trim_false)
     .into { qc_in_ch; finalize_libraries_in_ch }
 
-if (qc_merge_lanes){
+if (params.qc_merge_lanes){
     // merge together lanes in QC step
     // group by sample project + sample ID (omits lane from the key)
     qc_in_ch.map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
