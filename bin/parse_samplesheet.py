@@ -103,8 +103,8 @@ if __name__ == '__main__':
     parser.add_argument('--is-umi', action='store_true', default=False)
     parser.add_argument('--fwd-adapter', help='Forward adapter to trim.')
     parser.add_argument('--rev-adapter', help='Reverse adapter to trim.')
-    parser.add_argument('--project-name', help='Project name')
-    parser.add_argument('--library-type', help='Library type')
+    parser.add_argument('--project-name', help='Project name', default='unknown')
+    parser.add_argument('--library-type', help='Library type', default='unknown')
     parser.set_defaults(func=main)
     args = parser.parse_args()
 
