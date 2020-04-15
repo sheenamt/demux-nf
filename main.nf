@@ -17,9 +17,9 @@ process preflight {
     cpus 1
 
     script:
-        umi_options = params.is_umi ? "--is-umi " : null
-        fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : null
-        rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : null
+        umi_options = params.is_umi ? "--is-umi " : ""
+        fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : ""
+        rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : ""
         """
         parse_samplesheet.py \
             --input ${samplesheet} \
