@@ -9,8 +9,9 @@ process preflight {
         file("${params.run_id}.samplesheet.csv") into samplesheet_ch
         file("${params.run_id}.config.json") into config_file_ch
         
-    memory "2GB"
-    cpus 1
+    // this is high so that AWS provisions a big server immediately
+    cpus 30
+    memory '68 GB'
 
     script:
         umi_options = params.is_umi ? "--is-umi " : ""
@@ -55,7 +56,7 @@ process demux {
 
         """
         mkdir -p ${rundir}
-        #aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
+        aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
          tar xf ${rundir}/Data.tar -C ${rundir}/
