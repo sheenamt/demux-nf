@@ -29,7 +29,7 @@ process preflight {
 }
 
 def jsonSlurper = new JsonSlurper()
-config = jsonSlurper.parseText(config_file_ch.first().text.getVal())
+demux_config = jsonSlurper.parseText(config_file_ch.first().text.getVal())
 
 process demux {
     echo true
@@ -52,7 +52,7 @@ process demux {
 
     script:
         rundir = "inputs/${params.run_id}"
-        basemask = config.basemask ? "--use-bases-mask " + config.basemask : ""
+        basemask = demux_config.basemask ? "--use-bases-mask " + demux_config.basemask : ""
 
         """
         mkdir -p ${rundir}
@@ -96,8 +96,8 @@ demux_fastq_out_ch.flatMap()
     .groupTuple() // group FASTQ files by key
     .map { key, files -> 
           // attach config information
-          def config = config.lanes[key[0]][key[1]][key[2]]
-          [key, files, config] 
+          def c = demux_config.lanes[key[0]][key[1]][key[2]]
+          [key, files, c] 
          } 
     .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print'
     .filter { it[2].library_type != "CHARM" } // TODO REMOVE DEBUG
