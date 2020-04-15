@@ -1,10 +1,6 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-
-
-// read config
-// def jsonSlurper = new JsonSlurper()
-// config_file = jsonSlurper.parseText(file(params.config).text)
+def jsonSlurper = new JsonSlurper()
 
 process preflight {
     container "nkrumm/nextflow-demux:latest"
@@ -12,6 +8,7 @@ process preflight {
         file(samplesheet) from Channel.fromPath(params.samplesheet)
     output:
         set file("${params.run_id}.samplesheet.csv"), file("${params.run_id}.config.json") into config_ch
+        file("${params.run_id}.config.json") into config_file_ch
         
     memory "2GB"
     cpus 1
@@ -30,6 +27,17 @@ process preflight {
             ${fwd_adapter} ${rev_adapter}
         """
 }
+
+process readconfig {
+    input:
+        val(config) from config_file_ch
+    output:
+        val(config_file) into config_file_val
+    exec:
+        config_file = jsonSlurper.parseText(config.text)
+}
+
+config_file = config_file_val.first().view()
 
 process demux {
     echo true
