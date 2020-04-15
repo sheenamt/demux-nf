@@ -1,13 +1,12 @@
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-def jsonSlurper = new JsonSlurper()
 
 process preflight {
     container "nkrumm/nextflow-demux:latest"
     input:
         file(samplesheet) from Channel.fromPath(params.samplesheet)
     output:
-        set file("${params.run_id}.samplesheet.csv"), file("${params.run_id}.config.json") into config_ch
+        file("${params.run_id}.samplesheet.csv") into samplesheet_ch
         file("${params.run_id}.config.json") into config_file_ch
         
     memory "2GB"
@@ -28,16 +27,8 @@ process preflight {
         """
 }
 
-process readconfig {
-    input:
-        val(config) from config_file_ch
-    output:
-        val(config_file) into config_file_val
-    exec:
-        config_file = jsonSlurper.parseText(config.text)
-}
-
-config_file = config_file_val.first().view()
+def jsonSlurper = new JsonSlurper()
+config = jsonSlurper.parseText(config_file_ch.first().text.getVal())
 
 process demux {
     echo true
@@ -49,7 +40,7 @@ process demux {
     publishDir params.output_path, pattern: 'output/*.fastq.gz', mode: 'copy', overwrite: true // these are the "Undetermined" fastq.gz files
 
     input:
-        set file(samplesheet), file(config) from config_ch
+        file(samplesheet) from samplesheet_ch
     output:
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
@@ -60,10 +51,11 @@ process demux {
 
     script:
         rundir = "inputs/${params.run_id}"
-        basemask = config_file.basemask ? "--use-bases-mask " + config_file.basemask : ""
+        basemask = config.basemask ? "--use-bases-mask " + config.basemask : ""
+
         """
         mkdir -p ${rundir}
-        aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
+        #aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
 
         if [ -f ${rundir}/Data.tar ]; then
          tar xf ${rundir}/Data.tar -C ${rundir}/
