@@ -100,7 +100,6 @@ demux_fastq_out_ch.flatMap()
           [key, files, c] 
          } 
     .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print'
-    .filter { it[2].library_type != "CHARM" } // TODO REMOVE DEBUG
     .branch { 
         // send files to postprocess_ch.umi_true if is_umi is set.
         umi_true: it[2].is_umi
