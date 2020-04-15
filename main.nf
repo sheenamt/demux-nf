@@ -205,7 +205,7 @@ process fastqc {
     script:
         lane = key[0] // could be a number or "all_lanes" if qc_merge_lanes is true (see above) 
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
-        sample_name = "${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
+        sample_name = config.Sample_Name //"${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
         fastqc_path = "fastqc/${sample_name}/"
         if (fastqs.size() == 2)
             """
@@ -274,7 +274,7 @@ process multiqc {
     memory '4 GB'
     cpus 4
     input:
-        path('fastqc.*') from fastqc_report_ch.flatMap().collect()
+        path('*') from fastqc_report_ch.flatMap().collect()
         file("Stats.json") from stats_json_multiqc
         path("interop/*") from interop_output
         //file('*') from trim_reads_report_ch.collect()
@@ -283,6 +283,6 @@ process multiqc {
     publishDir params.output_path, saveAs: {f -> "multiqc/${f}"}, mode: "copy", overwrite: true
     script:
         """
-        multiqc -v -d --filename "multiqc_report.${params.fcid}.html" .
+        multiqc -v --filename "multiqc_report.${params.fcid}.html" .
         """
 }
