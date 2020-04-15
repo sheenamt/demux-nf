@@ -96,7 +96,7 @@ demux_fastq_out_ch.flatMap()
     .groupTuple() // group FASTQ files by key
     .map { key, files -> 
           // attach config information
-          def config = config_file.lanes[key[0]][key[1]][key[2]]
+          def config = config.lanes[key[0]][key[1]][key[2]]
           [key, files, config] 
          } 
     .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print'
