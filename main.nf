@@ -145,20 +145,31 @@ process trim {
     script:
         // TODO: consider using --stats and --report-file here to get report of read trimming
         def trim_options = config.additional_trim_options ? config.additional_trim_options : ""
-        """
-        # # -F file://${params.adapters} --no-default-adapters --no-cache-adapters
-        mkdir -p trimmed/
-        atropos \
-          -T ${task.cpus} \
-          -a ${config.fwd_adapter} \
-          -A ${config.rev_adapter} \
-          ${trim_options} \
-          -pe1 ${fastqs[0]} \
-          -pe2 ${fastqs[1]} \
-          -o trimmed/1.fastq.gz \
-          -p trimmed/2.fastq.gz \
-          > report.txt
-        """
+        if (fastqs.size() == 2)
+            """
+            mkdir -p trimmed/
+            atropos \
+              -T ${task.cpus} \
+              -a ${config.fwd_adapter} \
+              -A ${config.rev_adapter} \
+              ${trim_options} \
+              -pe1 ${fastqs[0]} \
+              -pe2 ${fastqs[1]} \
+              -o trimmed/1.fastq.gz \
+              -p trimmed/2.fastq.gz \
+              > report.txt
+            """
+        else
+            """
+            mkdir -p trimmed/
+            atropos \
+              -T ${task.cpus} \
+              -a ${config.fwd_adapter} \
+              ${trim_options} \
+              -se ${fastqs[0]} \
+              -o trimmed/1.fastq.gz \
+              > report.txt
+            """
 }
 
 // merge together trimmed and non-trimmed readgroups
