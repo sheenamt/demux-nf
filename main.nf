@@ -21,7 +21,7 @@ process preflight {
         fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : null
         rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : null
         """
-        python3 parse_samplesheet.py \
+        parse_samplesheet.py \
             --input ${samplesheet} \
             --output ${params.run_id} \
             --project-name ${params.project_name} \
