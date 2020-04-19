@@ -71,7 +71,6 @@ process demux {
             --ignore-missing-positions \
             --ignore-missing-bcls \
             --ignore-missing-filter \
-            --ignore-missing-positions \
             --barcode-mismatches 0,0 \
             --create-fastq-for-index-reads \
             ${basemask} \
