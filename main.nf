@@ -69,6 +69,7 @@ process demux {
             --sample-sheet ${samplesheet} \
             --min-log-level WARNING \
             --ignore-missing-positions \
+            --ignore-missing-bcls \
             --barcode-mismatches 0,0 \
             --create-fastq-for-index-reads \
             ${basemask} \
