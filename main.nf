@@ -129,6 +129,7 @@ process postprocess_umi {
         fastq2 = fastqs[1]
         umi = fastqs[2]
         """
+        mkdir -p processed/
         paste \
             <(zcat ${fastq1} \
             <(zcat ${umi} \
