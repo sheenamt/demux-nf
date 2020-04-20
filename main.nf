@@ -14,7 +14,7 @@ process preflight {
     memory '68 GB'
 
     script:
-        umi_options = params.is_umi ? "--is-umi " : ""
+        umi_options = params.basemask != "" ? "--is-umi --basemask ${params.basemask}" : ""
         fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : ""
         rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : ""
         """
@@ -89,7 +89,6 @@ demux_fastq_out_ch.flatMap()
           def lane_re = filename =~ /(?!L00)(\d)(?=_R\d_001.fastq.gz)/ // matches L00? in the filename for the lane.
           def lane = lane_re[0][0] // weird groovy way to get first match
           def project = tokens.get(tokens.size() - 2) // Project_Name
-          //def sample_id = tokens.get(tokens.size() - 2) // Sample_ID
           def sample_id_re = filename =~ /(.*)(?=_S[\d]*_L00\d_.*.fastq.gz)/
           def sample_id = sample_id_re[0][0]
           def key = tuple(lane, project, sample_id)
@@ -99,7 +98,13 @@ demux_fastq_out_ch.flatMap()
     .map { key, files -> 
           // attach config information
           def c = demux_config.lanes[key[0]][key[1]][key[2]]
-          [key, files, c] 
+          if (c.is_umi){
+            // if umi, read 2 is the UMI read, and read 3 is the reverse read, so re-order appropriately
+            [key, [files[0], files[2], files[1]], c] 
+          } else {
+            // for non-umi read 1 and read 2 are ordered sequentially
+            [key, [files[0], files[1]], c] 
+          }
          } 
     .view{ JsonOutput.prettyPrint(JsonOutput.toJson(it[2])) } // diagnostic print'
     .branch { 
@@ -111,14 +116,34 @@ demux_fastq_out_ch.flatMap()
 
 
 process postprocess_umi {
+    container "nkrumm/nextflow-demux:latest"
     echo true
+    cpus 4
+    memory '7 GB'
     input:
         set key, file(fastqs), config from postprocess_ch.umi_true
     output:
-        set key, file(fastqs), config into umi_out_ch
+        set key, file("processed/*.fastq.gz"), config into umi_out_ch
     script:
+        fastq1 = fastqs[0]
+        fastq2 = fastqs[1]
+        umi = fastqs[2]
         """
-        echo UMI $fastqs
+        paste \
+            <(zcat ${fastq1} \
+            <(zcat ${umi} \
+            | awk 'NR%4==1{readname=\$1}
+                   NR%4==2{seq=\$1; umi=\$2}
+                   NR%4==0 {print readname " RX:Z:"umi"\\n"seq"\\n+\\n"\$1;}' \
+            | gzip > processed/1.fastq.gz ;
+
+        paste \
+            <(zcat ${fastq2} \
+            <(zcat ${umi} \
+            | awk 'NR%4==1{readname=\$1}
+                   NR%4==2{seq=\$1; umi=\$2}
+                   NR%4==0 {print readname " RX:Z:"umi"\\n"seq"\\n+\\n"\$1;}' \
+            | gzip > processed/2.fastq.gz ;
         """
 }
 

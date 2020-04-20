@@ -55,7 +55,7 @@ def parse_samplesheet(args):
 
     return df
 
-def build_config(df):
+def build_config(df, args):
     config = neseted_dd()
     cols = ['Sample_Name', 'index', 'index2', 
             "is_umi", "fwd_adapter", "rev_adapter", 
@@ -64,6 +64,9 @@ def build_config(df):
     for ix, row in df.iterrows():
         config["lanes"][row.Lane][row.Sample_Project][row.Sample_ID] = row[cols].to_dict()
     
+    if args.is_umi:
+        config["basemask"] = args.basemask
+
     return defaultdict_to_regular(config)
 
 def build_samplesheet(df):
@@ -83,7 +86,7 @@ def build_samplesheet(df):
 def main(args):
     df = parse_samplesheet(args)
     
-    config = build_config(df)
+    config = build_config(df, args)
     samplesheet = build_samplesheet(df)
     
     with open(f"{args.output}.config.json", "w") as config_fp:
@@ -101,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('--input', help='Input sample sheet to parse.')
     parser.add_argument('--output', help='Output prefix for files')
     parser.add_argument('--is-umi', action='store_true', default=False)
+    parser.add_argument('--basemask', help='Basemask string to use for UMI demultiplex', default='Y101,I8Y9,I8,Y101')
     parser.add_argument('--fwd-adapter', help='Forward adapter to trim.')
     parser.add_argument('--rev-adapter', help='Reverse adapter to trim.')
     parser.add_argument('--project-name', help='Project name', default='unknown')
