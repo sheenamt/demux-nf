@@ -131,16 +131,16 @@ process postprocess_umi {
         """
         mkdir -p processed/
         paste \
-            <(zcat ${fastq1} \
-            <(zcat ${umi} \
+            <(zcat ${fastq1}) \
+            <(zcat ${umi}) \
             | awk 'NR%4==1{readname=\$1}
                    NR%4==2{seq=\$1; umi=\$2}
                    NR%4==0 {print readname " RX:Z:"umi"\\n"seq"\\n+\\n"\$1;}' \
             | gzip > processed/1.fastq.gz ;
 
         paste \
-            <(zcat ${fastq2} \
-            <(zcat ${umi} \
+            <(zcat ${fastq2}) \
+            <(zcat ${umi}) \
             | awk 'NR%4==1{readname=\$1}
                    NR%4==2{seq=\$1; umi=\$2}
                    NR%4==0 {print readname " RX:Z:"umi"\\n"seq"\\n+\\n"\$1;}' \
