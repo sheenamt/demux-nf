@@ -53,7 +53,7 @@ process demux {
     script:
         rundir = "inputs/${params.run_id}"
         basemask = demux_config.basemask ? "--use-bases-mask " + demux_config.basemask : ""
-
+        merge_lanes = params.merge_lanes ? "--no-lane-splitting" : ""
         """
         mkdir -p ${rundir}
         aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
@@ -74,6 +74,7 @@ process demux {
             --barcode-mismatches 0,0 \
             --create-fastq-for-index-reads \
             ${basemask} \
+            ${merge_lanes} \
             --mask-short-adapter-reads 0
         """
 }
