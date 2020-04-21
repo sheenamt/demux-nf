@@ -226,7 +226,7 @@ process fastqc {
     publishDir params.output_path, pattern: "*.html", mode: "copy", overwrite: true
     
     input:
-        set key, file(fastqs), config from fastqc_in_ch
+        set key, path("fastq??.fq.gz"), config from fastqc_in_ch
     output:
         path "fastqc/*", type:"dir" into fastqc_report_ch
    
@@ -235,16 +235,11 @@ process fastqc {
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
         sample_name = config.Sample_Name //"${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
         fastqc_path = "fastqc/${sample_name}/"
-        if (fastqs.size() == 2)
-            """
-            mkdir -p ${fastqc_path}
-            zcat ${fastqs[0]} ${fastqs[1]} | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}
-            """
-        else
-            """
-            mkdir -p ${fastqc_path}
-            zcat ${fastqs[0]} | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}
-            """
+        
+        """
+        mkdir -p ${fastqc_path}
+        zcat fastq*.fq.gz | fastqc --quiet -o ${fastqc_path} stdin:${sample_name}
+        """
 }   
 
 process finalize_libraries {
