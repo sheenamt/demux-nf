@@ -17,12 +17,14 @@ process preflight {
         umi_options = params.basemask != "" ? "--is-umi --basemask ${params.basemask}" : ""
         fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : ""
         rev_adapter = params.rev_adapter ? "--rev-adapter ${params.rev_adapter}" : ""
+        merge_lanes = params.merge_lanes ? "--merge-lanes" : ""
         """
         parse_samplesheet.py \
             --input ${samplesheet} \
             --output ${params.run_id} \
             --project-name ${params.project_name} \
             --library-type ${params.library_type} \
+            ${merge_lanes} \
             ${umi_options} \
             ${fwd_adapter} ${rev_adapter}
         """

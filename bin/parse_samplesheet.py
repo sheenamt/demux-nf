@@ -40,8 +40,9 @@ def parse_samplesheet(args):
     df["is_umi"] = args.is_umi
     df["fwd_adapter"] = args.fwd_adapter
     df["rev_adapter"] = args.rev_adapter
-    if "Lane" not in df:
-        df["Lane"] = 1
+    if ("Lane" not in df) or (args.merge_lanes):
+        log.info("Merging samples across all lanes!")
+        df["Lane"] = "all"
     df["Sample_Project"] = args.project_name
     df["library_type"] = args.library_type
     
@@ -53,6 +54,7 @@ def parse_samplesheet(args):
         log.error("Samplesheet must specify Sample_ID or Sample_Name!")
         sys.exit(1)
 
+    df = df.drop_duplicates() # needed in case merge_lanes is true, which can result in duplicates
     return df
 
 def build_config(df, args):
@@ -71,17 +73,18 @@ def build_config(df, args):
 
     return defaultdict_to_regular(config)
 
-def build_samplesheet(df):
+def build_samplesheet(df, args):
     samplesheet = SampleSheet()
     for ix, row in df.iterrows():
         s = {
-            'Lane': row.Lane,
             'Sample_ID': row.Sample_ID,
             'Sample_Name': row.Sample_Name,
             'Sample_Project': row.Sample_Project,
             'index': row["index"],
             'index2': row.index2
         }
+        if not args.merge_lanes:
+            s["Lane"] = row.Lane
         samplesheet.add_sample(Sample(s))
     return samplesheet
 
@@ -89,7 +92,7 @@ def main(args):
     df = parse_samplesheet(args)
     
     config = build_config(df, args)
-    samplesheet = build_samplesheet(df)
+    samplesheet = build_samplesheet(df, args)
     
     with open(f"{args.output}.config.json", "w") as config_fp:
         json.dump(config, config_fp, indent=2)
@@ -106,6 +109,7 @@ if __name__ == '__main__':
     parser.add_argument('--input', help='Input sample sheet to parse.')
     parser.add_argument('--output', help='Output prefix for files')
     parser.add_argument('--is-umi', action='store_true', default=False)
+    parser.add_argument('--merge-lanes', action='store_true', default=False)
     parser.add_argument('--basemask', help='Basemask string to use for UMI demultiplex', default='Y146,I8Y9,I8,Y146')
     parser.add_argument('--fwd-adapter', help='Forward adapter to trim.')
     parser.add_argument('--rev-adapter', help='Reverse adapter to trim.')
