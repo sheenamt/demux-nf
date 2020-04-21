@@ -85,16 +85,21 @@ demux_fastq_out_ch.flatMap()
     .filter { path -> !("${path.getName()}" =~ /^Undetermined_S0_L/) } // first filter ignore Undetermined read files
     .filter { path -> !("${path.getName()}" =~ /I\d_001.fastq.gz$/) } // filter out indexing reads
     .map { path -> 
-          def filename = path.getName() // gets filename
-          def tokens = path.toString().tokenize('/') // tokenize path
-          def lane_re = filename =~ /(?!L00)(\d)(?=_R\d_001.fastq.gz)/ // matches L00? in the filename for the lane.
-          def lane = lane_re[0][0] // weird groovy way to get first match
-          def project = tokens.get(tokens.size() - 2) // Project_Name
-          def sample_id_re = filename =~ /(.*)(?=_S[\d]*_L00\d_.*.fastq.gz)/
-          def sample_id = sample_id_re[0][0]
-          def key = tuple(lane, project, sample_id)
+          def (filename, project_name, rest) = path.toString().tokenize('/').reverse() // tokenize path
+          if (params.merge_lanes){
+            // if bcl2fastq was run with --no-lane-splitting, no lane token will be availabe in filename
+            // e.g., "294R09-A02-MONCv1-NA12878_S1_I1_001.fastq.gz"
+            (extension, read_num, sample_num, sample_id) = filename.tokenize("_").reverse()
+            lane = "all"
+          } else {
+            // otherwise, if lanes are split token will be availabe in filename
+            // e.g., "294R09-A02-MONCv1-NA12878_S1_L001_I1_001.fastq.gz"
+            (extension, read_num, lane, sample_num, sample_id) = filename.tokenize("_").reverse()
+            lane = lane.replaceAll("L00", "") // just use lane number
+          }
+          def key = tuple(lane, project_name, sample_id)
           return tuple(key, path)
-         }
+    }
     .groupTuple() // group FASTQ files by key
     .map { key, files -> 
           // attach config information
@@ -207,10 +212,10 @@ process trim {
 trim_out_ch.mix(trim_in_ch.trim_false)
     .into { qc_in_ch; finalize_libraries_in_ch }
 
-if (params.qc_merge_lanes){
+if (params.merge_lanes || params.qc_merge_lanes){
     // merge together lanes in QC step
     // group by sample project + sample ID (omits lane from the key)
-    qc_in_ch.map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
+    qc_in_ch.map{ key, files, config -> [["all", key[1], key[2]], files, config]}
             .groupTuple(size: demux_config.number_of_lanes, remainder: true)
             .map{ key, files, config -> [key, files.flatten(), config[0]] }
             .set{ fastqc_in_ch }
@@ -232,7 +237,7 @@ process fastqc {
         path "fastqc/*", type:"dir" into fastqc_report_ch
    
     script:
-        lane = key[0] // could be a number or "all_lanes" if qc_merge_lanes is true (see above) 
+        lane = key[0] // could be a number or "all" if qc_merge_lanes is true (see above) 
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
         sample_name = config.Sample_Name //"${config.Sample_Name}:${config.library_type}:${readgroup}:${lane}"
         fastqc_path = "fastqc/${sample_name}/"
@@ -258,7 +263,7 @@ process finalize_libraries {
     output:
         path("libraries/**.fastq.gz")
     script: 
-        lane = key[0] // note this is always the lane number, we don't store merged lanes.
+        lane = key[0] // note this is either the lane number or "all" if params.merge_lanes == true
         readgroup = "${params.fcid}.${lane}.${config.index}-${config.index2}"
         library_path = "libraries/${config.Sample_Name}/${config.library_type}/${readgroup}"
         if (fastqs.size() == 2)
