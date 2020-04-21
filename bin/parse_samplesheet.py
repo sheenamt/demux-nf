@@ -106,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('--input', help='Input sample sheet to parse.')
     parser.add_argument('--output', help='Output prefix for files')
     parser.add_argument('--is-umi', action='store_true', default=False)
-    parser.add_argument('--basemask', help='Basemask string to use for UMI demultiplex', default='Y101,I8Y9,I8,Y101')
+    parser.add_argument('--basemask', help='Basemask string to use for UMI demultiplex', default='Y146,I8Y9,I8,Y146')
     parser.add_argument('--fwd-adapter', help='Forward adapter to trim.')
     parser.add_argument('--rev-adapter', help='Reverse adapter to trim.')
     parser.add_argument('--project-name', help='Project name', default='unknown')
