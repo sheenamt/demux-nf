@@ -210,7 +210,7 @@ if (params.qc_merge_lanes){
     // merge together lanes in QC step
     // group by sample project + sample ID (omits lane from the key)
     qc_in_ch.map{ key, files, config -> [["all_lanes", key[1], key[2]], files, config]}
-            .groupTuple()
+            .groupTuple(size: demux_config.number_of_lanes, remainder: true)
             .map{ key, files, config -> [key, files.flatten(), config[0]] }
             .set{ fastqc_in_ch }
 } else {

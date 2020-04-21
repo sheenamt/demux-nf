@@ -67,6 +67,8 @@ def build_config(df, args):
     if args.is_umi:
         config["basemask"] = args.basemask
 
+    config["number_of_lanes"] = df.Lane.nunique()
+
     return defaultdict_to_regular(config)
 
 def build_samplesheet(df):
