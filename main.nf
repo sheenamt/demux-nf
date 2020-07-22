@@ -9,10 +9,6 @@ process preflight {
         file("${params.run_id}.samplesheet.csv") into samplesheet_ch
         file("${params.run_id}.config.json") into config_file_ch
         
-    // this is high so that AWS provisions a big server immediately
-    cpus 30
-    memory '68 GB'
-
     script:
         umi_options = params.basemask != "" ? "--is-umi --basemask ${params.basemask}" : ""
         fwd_adapter = params.fwd_adapter ? "--fwd-adapter ${params.fwd_adapter}" : ""
@@ -35,8 +31,6 @@ demux_config = jsonSlurper.parseText(config_file_ch.first().text.getVal())
 
 process demux {
     echo true
-    cpus 30
-    memory '68 GB'
     container "nkrumm/nextflow-demux:latest"
     publishDir params.output_path, pattern: 'output/Reports', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}, overwrite: true
     publishDir params.output_path, pattern: 'output/Stats', mode: 'copy', saveAs: {f -> f.replaceFirst("output/", "")}, overwrite: true
@@ -44,6 +38,7 @@ process demux {
 
     input:
         file(samplesheet) from samplesheet_ch
+        path(run_folder) from params.run_folder
     output:
         file("output/**.fastq.gz") into demux_fastq_out_ch
         file("output/Reports")
@@ -53,10 +48,31 @@ process demux {
         file("inputs/${params.run_id}/RunInfo.xml") into interop_input_xml
 
     script:
-        rundir = "inputs/${params.run_id}"
-        basemask = demux_config.basemask ? "--use-bases-mask " + demux_config.basemask : ""
-        merge_lanes = params.merge_lanes ? "--no-lane-splitting" : ""
+       basemask = demux_config.basemask ? "--use-bases-mask " + demux_config.basemask : ""
+       merge_lanes = params.merge_lanes ? "--no-lane-splitting" : ""
+       rundir = "inputs/${params.run_id}"
+   if (workflow.profile == 'local')
+       """
+        mkdir -p inputs/
+        cp -r ${run_folder} inputs/
+
+        bcl2fastq \
+            --runfolder-dir ${rundir} \
+            --output-dir output/ \
+            --sample-sheet ${samplesheet} \
+            --min-log-level WARNING \
+            --ignore-missing-positions \
+            --ignore-missing-bcls \
+            --ignore-missing-filter \
+            --barcode-mismatches 0,0 \
+            --create-fastq-for-index-reads \
+            ${basemask} \
+            ${merge_lanes} \
+            --mask-short-adapter-reads 0
         """
+    else 
+
+	"""
         mkdir -p ${rundir}
         aws s3 sync --only-show-errors ${params.run_folder} ${rundir}
 
@@ -64,8 +80,8 @@ process demux {
          tar xf ${rundir}/Data.tar -C ${rundir}/
          rm ${rundir}/Data.tar
         fi
-        
-        bcl2fastq \
+
+     bcl2fastq \
             --runfolder-dir ${rundir} \
             --output-dir output/ \
             --sample-sheet ${samplesheet} \
@@ -179,7 +195,7 @@ process trim {
         //file(params.adapters)
     output:
         set key, file("trimmed/*.fastq.gz"), config into trim_out_ch
-    
+	    
     script:
         // TODO: consider using --stats and --report-file here to get report of read trimming
         def trim_options = config.additional_trim_options ? config.additional_trim_options : ""
@@ -274,13 +290,13 @@ process finalize_libraries {
         if (fastqs.size() == 2)
             """
             mkdir -p ${library_path}
-            mv ${fastqs[0]} ${library_path}/1.fastq.gz
-            mv ${fastqs[1]} ${library_path}/2.fastq.gz
+            mv ${fastqs[0]} ${library_path}/${config.Sample_Name}.1.fastq.gz
+            mv ${fastqs[1]} ${library_path}/${config.Sample_Name}.2.fastq.gz
             """
         else
             """
             mkdir -p ${library_path}
-            mv ${fastqs[0]} ${library_path}/1.fastq.gz
+            mv ${fastqs[0]} ${library_path}/${config.Sample_Name}.1.fastq.gz
             """
 }
 
@@ -320,3 +336,4 @@ process multiqc {
         multiqc -v --filename "multiqc_report.${params.fcid}.html" .
         """
 }
+
